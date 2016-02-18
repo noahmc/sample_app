@@ -1,17 +1,15 @@
 require 'test_helper'
 
 class UsersLoginTest < ActionDispatch::IntegrationTest
+
   def setup
-    post users_path, user: { name: "Test Account",
-                             email: "test@email.com",
-                             password: "testtest",
-                             password_confirmation: "testtest" }
+    @user = users(:michael)
   end
 
   test "should display errors in flash on invalid login attempt for one request" do
     get login_path
     assert_template 'sessions/new'
-    post login_path, session: { email: "test@email.com", password: "foo" }
+    post login_path, session: { email: "michael@example.com", password: "foo" }
     assert_not flash.empty?
     assert_template 'sessions/new'
 
@@ -22,8 +20,24 @@ class UsersLoginTest < ActionDispatch::IntegrationTest
   test "should log a user in with correct credentials" do
     get login_path
     assert_template 'sessions/new'
-    post login_path, session: { email: "test@email.com", password: "testtest" }
+    post login_path, session: { email: "michael@example.com", password: "password" }
     assert flash.empty?
+    follow_redirect!
     assert_template 'users/show'
   end
+
+  test "login should change the links in the header" do
+    get login_path
+    assert_select 'a[href=?]', user_path(@user), count: 0
+    assert_select 'a[href=?]', logout_path, count: 0
+    assert_select 'a[href=?]', login_path, count: 1
+    post login_path, session: { email: "michael@example.com", password: "password" }
+    assert_redirected_to @user
+    follow_redirect!
+    assert_template 'users/show'
+    assert_select 'a[href=?]', login_path, count: 0
+    assert_select 'a[href=?]', logout_path, count: 1
+    assert_select 'a[href=?]', user_path(@user), count: 1
+  end
+
 end
