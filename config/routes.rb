@@ -13,4 +13,5 @@ Rails.application.routes.draw do
   get 'contact' => 'static_pages#contact'
 
   resources :users
+  resources :account_activations, only: [:edit]
 end
